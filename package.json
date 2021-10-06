@@ -7,6 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "axios": "^0.22.0",
     "bootstrap": "^5.1.1",
     "core-js": "^3.6.5",
     "vue": "^3.0.0",
@@ -21,6 +22,7 @@
     "@vue/cli-plugin-vuex": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0",
+    "miragejs": "^0.1.42",
     "node-sass": "^4.12.0",
     "sass-loader": "^8.0.2",
     "typescript": "~4.1.5"
