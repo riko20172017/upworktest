@@ -140,7 +140,7 @@ export default class Signup extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 html,
 body,
 .app {
