@@ -173,6 +173,19 @@ export class Validation {
     }
 
     /**
+     * getValues
+     */
+    public getValues() {
+        let values: {
+            [key: string]: string
+        } = {}
+        this.fields.map(field => {
+            values[field.name] = field.value
+        })
+        return values
+    }
+
+    /**
      * addServerErrors
      */
     public addServerErrors(messages: { name: string, message: string }[]) {
@@ -183,7 +196,6 @@ export class Validation {
                 }
             })
         })
-
     }
 
 
