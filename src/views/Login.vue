@@ -135,6 +135,7 @@ export default class Login extends Vue {
       } else {
         this.isSending = false;
       }
+      this.form.clear()
     }
   }
 }

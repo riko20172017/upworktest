@@ -67,13 +67,6 @@ class Field {
     }
 
     /**
-     * hasMasseges
-     */
-    public hasErrors() {
-        this.message.length !== 0
-    }
-
-    /**
      * doDirty
      */
     public doDirty() {
@@ -165,7 +158,18 @@ export class Validation {
      * isValid
      */
     public isFormValid() {
-        return this.fields.every(field => field.hasErrors())
+        return this.fields.every(field => field.message == "")
+    }
+
+    /**
+     * clear
+     */
+    public clear() {
+        this.fields.map((field) => {
+            field.value = "";
+            field.wasValidate = false
+            return field
+        })
     }
 
 
