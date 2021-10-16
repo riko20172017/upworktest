@@ -97,7 +97,7 @@
                 v-else
                 class="d-flex align-items-center justify-content-center"
               >
-                <strong v-if="isOk">Entering...</strong>
+                <strong v-if="redirection">Redirect...</strong>
                 <strong v-else>Loading......</strong>
                 <div
                   class="spinner-border spinner-border-sm ms-2"
@@ -131,6 +131,7 @@ export default class Login extends Vue {
   ]);
 
   isSending = false;
+  redirection = false;
 
   get disabled() {
     return this.isSending;
@@ -156,10 +157,11 @@ export default class Login extends Vue {
       this.isSending = true;
       let res = await axios.post<string, { data: { isOk: boolean } }>(
         "/api/signup",
-        JSON.stringify({})
+        JSON.stringify(this.form.getValues())
       );
 
       if (res.data.isOk) {
+        this.redirection = true;
         setTimeout(() => {
           this.$router.push("dashboard");
         }, 2000);
