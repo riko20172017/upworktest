@@ -1,171 +1,183 @@
 <template>
-  <main class="form-signin signup">
-    <form @submit.prevent="checkForm" novalidate class="has-validation">
-      <img
-        class="mb-4"
-        src="../assets/logo.png"
-        alt=""
-        width="72"
-        height="57"
-      />
-      <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-
-      <div class="form-floating">
-        <input
-          type="email"
-          v-bind:class="[
-            'form-control',
-            this.isActive ? validationClass('email') : '',
-          ]"
-          id="floatingInput"
-          placeholder="name@example.com"
-          v-model="email"
-          @change="checkForm"
-          :disabled="disabled"
-        />
-        <div
-          class="invalid-feedback mt-0 mb-2"
-          v-for="(error, key) in errors.email"
-          :key="key"
-        >
-          {{ error }}
+  <main class="form-signup text-center centered">
+    <div class="container">
+      <div class="row g-5">
+        <div class="col-md-8 col-lg-6 offset-md-2 offset-lg-3">
+          <img
+            class="mb-4"
+            src="../assets/logo.png"
+            alt=""
+            width="72"
+            height="57"
+          />
+          <h1 class="h3 mb-3 fw-normal">Please sign up</h1>
+          <form @submit.prevent="onSubmit" novalidate class="has-validation">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="form-floating">
+                  <custom-input
+                    :isValid="form.isValid('firstName')"
+                    :message="form.getMessage('firstName')"
+                    :wasValidate="form.wasValidate('firstName')"
+                    :value="form.getFieldValue('firstName')"
+                    @custom-change="handleChange"
+                    @custom-input="handleInput"
+                    :disabled="disabled"
+                    placeholder="First name"
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                  />
+                  <label for="firstName" class="form-label">First name</label>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="form-floating">
+                  <custom-input
+                    :isValid="form.isValid('lastName')"
+                    :message="form.getMessage('lastName')"
+                    :wasValidate="form.wasValidate('lastName')"
+                    :value="form.getFieldValue('lastName')"
+                    @custom-change="handleChange"
+                    @custom-input="handleInput"
+                    :disabled="disabled"
+                    placeholder="Last name"
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                  />
+                  <label for="lastName" class="form-label">Last name</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <custom-input
+                    :isValid="form.isValid('email')"
+                    :message="form.getMessage('email')"
+                    :wasValidate="form.wasValidate('email')"
+                    :value="form.getFieldValue('email')"
+                    @custom-change="handleChange"
+                    @custom-input="handleInput"
+                    :disabled="disabled"
+                    placeholder="name@example.com"
+                    id="email"
+                    name="email"
+                    type="email"
+                  />
+                  <label for="email" class="form-label">Email</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <custom-input
+                    :isValid="form.isValid('password')"
+                    :message="form.getMessage('password')"
+                    :wasValidate="form.wasValidate('password')"
+                    :value="form.getFieldValue('password')"
+                    @custom-change="handleChange"
+                    @custom-input="handleInput"
+                    :disabled="disabled"
+                    placeholder="Password"
+                    id="password"
+                    name="password"
+                    type="password"
+                  />
+                  <label for="password" class="form-label">Password</label>
+                </div>
+              </div>
+            </div>
+            <hr class="my-4" />
+            <button
+              class="w-100 btn btn-lg btn-primary"
+              type="submit"
+              :disabled="disabled"
+            >
+              <span v-if="!disabled">Create</span>
+              <div
+                v-else
+                class="d-flex align-items-center justify-content-center"
+              >
+                <strong v-if="isOk">Entering...</strong>
+                <strong v-else>Loading......</strong>
+                <div
+                  class="spinner-border spinner-border-sm ms-2"
+                  role="status"
+                  aria-hidden="true"
+                ></div>
+              </div>
+            </button>
+          </form>
         </div>
-        <label for="floatingInput">Email address</label>
       </div>
-      <div class="form-floating">
-        <input
-          type="text"
-          id="floatingPassword"
-          placeholder="Password"
-          v-bind:class="[
-            'form-control',
-            this.isActive ? validationClass('password') : '',
-          ]"
-          v-model="password"
-          @change="checkForm"
-          :disabled="disabled"
-        />
-        <div
-          class="invalid-feedback mt-0 mb-2"
-          v-for="(error, key) in errors.password"
-          :key="key"
-        >
-          {{ error }}
-        </div>
-        <label for="floatingPassword">Password</label>
-      </div>
-      <div class="mb-3"></div>
-      <button
-        class="w-100 btn btn-lg btn-primary"
-        type="submit"
-        :disabled="disabled"
-      >
-        <span v-if="!disabled">Sign in</span>
-        <div v-else class="d-flex align-items-center justify-content-center">
-          <strong>Loading...</strong>
-          <div
-            class="spinner-border spinner-border-sm ms-2"
-            role="status"
-            aria-hidden="true"
-          ></div>
-        </div>
-      </button>
-      <button type="button" class="btn btn-light text-muted w-100">Forgot Password?</button>
-      <button type="button" class="btn btn-light mt-3 text-primary w-100" @click="$router.push('signup')">New user? Sign up</button>
-      <p class="mt-5 mb-3 text-muted">© 2021</p>
-    </form>
+    </div>
   </main>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from "vue-class-component";
 import axios from "axios";
+import { Validation } from "@/utils/vaildation";
+import Input from "@/components/Form/Input.vue";
 
 @Options({
-  components: {},
+  components: { "custom-input": Input },
 })
-export default class Signup extends Vue {
-  email: string = "";
-  password: string = "";
-  isOk: boolean = false;
-  isSending: boolean = false;
-  isActive: boolean = false;
-  errors: {
-    [email: string]: Array<string>;
-    password: Array<string>;
-  } = { email: [], password: [] };
+export default class Login extends Vue {
+  form = new Validation([
+    { name: "email", rules: ["email", "empty"] },
+    { name: "password", rules: [[4, 8], "empty"] },
+    { name: "firstName", rules: [[2, 8], "empty"] },
+    { name: "lastName", rules: [[2, 8], "empty"] },
+  ]);
+
+  isSending = false;
 
   get disabled() {
     return this.isSending;
   }
 
-  get validationClass() {
-    return (field: string) => ({
-      "is-valid": this.errors[field].length == 0,
-      "is-invalid": this.errors[field].length > 0,
-    });
+  /**
+   * handleChange
+   */
+  public handleChange(name: "password" | "email") {
+    this.form.validate(name);
   }
 
-  checkForm() {
-    this.errors = { email: [], password: [] };
-    this.isActive = true;
-
-    if (this.email === "") {
-      this.errors.email.push("input mail");
-    } else if (!this.validEmail(this.email)) {
-      this.errors.email.push("Input correct email");
-    }
-    if (this.password === "") {
-      this.errors.password.push("input password");
-    } else if (this.password.length < 4 || this.password.length > 8) {
-      this.errors.password.push("Min is 4 and max is 8");
-    }
-  }
-
-  validEmail(email: string): boolean {
-    var re =
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(email);
+  /**
+   * handleInnput
+   */
+  public handleInput(target: { name: "password" | "email"; value: string }) {
+    this.form.changeValue(target.name, target.value);
   }
 
   async onSubmit() {
-    this.isSending = true;
-    let res = await axios.post<string, { data: { isOk: boolean } }>(
-      "/api/login",
-      JSON.stringify({ email: this.email, password: this.password })
-    );
-    this.isOk = res.data.isOk;
-    this.isSending = false;
+    this.form.validateAll();
+    if (this.form.isFormValid()) {
+      this.isSending = true;
+      let res = await axios.post<string, { data: { isOk: boolean } }>(
+        "/api/signup",
+        JSON.stringify({})
+      );
+
+      if (res.data.isOk) {
+        setTimeout(() => {
+          this.$router.push("dashboard");
+        }, 2000);
+      } else {
+        this.isSending = false;
+      }
+      this.form.clear();
+    }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-html,
-body,
 .app {
-  height: 100%;
-}
-.app {
-  text-align: center !important;
   display: flex;
   align-items: center;
   padding-top: 40px;
   padding-bottom: 40px;
   background-color: #f5f5f5;
-}
-.form-signin {
-  width: 100%;
-  max-width: 330px;
-  padding: 15px;
-  margin: auto;
-}
-.form-signin input[type="password"] {
-  margin-bottom: 10px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-.btn-light.text-muted{
-  font-size: 12px;
 }
 </style>

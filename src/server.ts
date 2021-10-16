@@ -1,13 +1,14 @@
 import { createServer, Model } from "miragejs";
 
 export function makeServer({ environment = "development" } = {}) {
+    let id = 9;
     let server = createServer({
         seeds(server) {
             server.db.loadData({
                 users: [
-                    { email: "x@example.com", password: "test" },
-                    { email: "y@example.com", password: "test" },
-                    { email: "z@example.com", password: "test" },
+                    { email: "x@example.com", password: "test", firstName: "", lastName: "" },
+                    { email: "y@example.com", password: "test", firstName: "", lastName: "" },
+                    { email: "z@example.com", password: "test", firstName: "", lastName: "" },
                 ],
                 posts: [
                     { id: 1, title: "Title lorem ipsum", content: "Content lorem ipsum" },
@@ -29,16 +30,26 @@ export function makeServer({ environment = "development" } = {}) {
             this.post("/login", (schema, request) => {
                 let { email, password } = JSON.parse(request.requestBody)
                 let user = schema.db.users.filter((item) => item.email == email && item.password == password)
-                return user.length > 0 ? { isOk: true } : { isOk: false }
-            }),
-                this.get("/posts", (schema, request) => {
-                    return { posts: schema.db.posts }
-                }),
-                this.delete("/post", (schema, request) => {
-                    let { id } = JSON.parse(request.requestBody)
-                    schema.db.posts.remove({ id })
-                    return { id }
-                })
+                return user.length > 0 ? { isOk: true } : {
+                    isOk: false, messages: [
+                        { name: "email", message: "Login or password is incorrect" },
+                        { name: "password", message: "Login or password is incorrect" }
+                    ]
+                }
+            })
+            this.post("/signup", (schema, request) => {
+                let { email, password, lastName, firstName } = JSON.parse(request.requestBody)
+                schema.db.users.insert({ email, password, firstName, lastName })
+                return { isOk: true }
+            })
+            this.get("/posts", (schema, request) => {
+                return { posts: schema.db.posts }
+            })
+            this.delete("/post", (schema, request) => {
+                let { id } = JSON.parse(request.requestBody)
+                schema.db.posts.remove({ id })
+                return { id }
+            })
         },
     });
 

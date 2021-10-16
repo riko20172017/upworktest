@@ -172,6 +172,20 @@ export class Validation {
         })
     }
 
+    /**
+     * addServerErrors
+     */
+    public addServerErrors(messages: { name: string, message: string }[]) {
+        messages.forEach(({ name, message }) => {
+            this.fields.map(field => {
+                if (field.name == name) {
+                    field.message = message
+                }
+            })
+        })
+
+    }
+
 
 
 

@@ -1,15 +1,15 @@
 <template>
   <input
-    type="email"
+    :type="type"
     :class="[
       'form-control',
       !wasValidate ? '' : isValid ? 'is-valid' : 'is-invalid',
     ]"
-    id="floatingInput"
-    placeholder="name@example.com"
+    :id="id"
+    :placeholder="placeholder"
     :value="value"
-    v-on:change="$emit('custom-change', $event.target.name)"
-    v-on:input="
+    @change="$emit('custom-change', $event.target.name)"
+    @input="
       $emit('custom-input', {
         value: $event.target.value,
         name: $event.target.name,
@@ -49,6 +49,9 @@ class Props {
     required: true,
   });
   placeholder: string = prop({
+    required: true,
+  });
+  type: string = prop({
     required: true,
   });
 }

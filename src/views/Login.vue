@@ -1,75 +1,84 @@
 <template>
-  <main class="form-signin login">
-    <form @submit.prevent="onSubmit" novalidate class="has-validation">
-      <img
-        class="mb-4"
-        src="../assets/logo.png"
-        alt=""
-        width="72"
-        height="57"
-      />
-      <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
-      <div class="form-floating">
-        <!-- email input --------------------------------------------------------------->
-        <custom-input
-          :isValid="form.isValid('email')"
-          :message="form.getMessage('email')"
-          :wasValidate="form.wasValidate('email')"
-          :value="email"
-          @custom-change="handleChange"
-          @custom-input="handleInput"
-          :disabled="disabled"
-          placeholder="email"
-          id="email"
-          name="email"
-        />
-        <label for="email">Email address</label>
+  <main class="text-center centered">
+    <div class="form-signin">
+      <div class="container">
+        <form @submit.prevent="onSubmit" novalidate class="has-validation">
+          <img
+            class="mb-4"
+            src="../assets/logo.png"
+            alt=""
+            width="72"
+            height="57"
+          />
+          <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+          <div class="form-floating">
+            <!-- email input --------------------------------------------------------------->
+            <custom-input
+              :isValid="form.isValid('email')"
+              :message="form.getMessage('email')"
+              :wasValidate="form.wasValidate('email')"
+              :value="email"
+              @custom-change="handleChange"
+              @custom-input="handleInput"
+              :disabled="disabled"
+              placeholder="name@example.com"
+              id="email"
+              name="email"
+              type="email"
+            />
+            <label for="email">Email address</label>
+          </div>
+          <div class="form-floating">
+            <!-- password input ------------------------------------------------------------->
+            <custom-input
+              :isValid="form.isValid('password')"
+              :message="form.getMessage('password')"
+              :wasValidate="form.wasValidate('password')"
+              :value="password"
+              @custom-change="handleChange"
+              @custom-input="handleInput"
+              :disabled="disabled"
+              placeholder="password"
+              id="password"
+              name="password"
+              type="password"
+            />
+            <label for="password">Password</label>
+          </div>
+          <div class="mb-3"></div>
+          <button
+            class="w-100 btn btn-lg btn-primary"
+            type="submit"
+            :disabled="disabled"
+          >
+            <span v-if="!disabled">Sign in</span>
+            <div
+              v-else
+              class="d-flex align-items-center justify-content-center"
+            >
+              <strong v-if="isOk">Entering...</strong>
+              <strong v-else>Loading......</strong>
+              <div
+                class="spinner-border spinner-border-sm ms-2"
+                role="status"
+                aria-hidden="true"
+              ></div>
+            </div>
+          </button>
+          <button type="button" class="btn btn-light text-muted w-100 mt-1">
+            Forgot Password?
+          </button>
+          <button
+            type="button"
+            class="btn btn-light mt-3 text-primary w-100"
+            @click="$router.push('signup')"
+          >
+            New user? Sign up
+          </button>
+          <p class="mt-5 mb-3 text-muted">© 2021</p>
+        </form>
       </div>
-      <div class="form-floating">
-        <!-- password input ------------------------------------------------------------->
-        <custom-input
-          :isValid="form.isValid('password')"
-          :message="form.getMessage('password')"
-          :wasValidate="form.wasValidate('password')"
-          :value="password"
-          @custom-change="handleChange"
-          @custom-input="handleInput"
-          :disabled="disabled"
-          placeholder="password"
-          id="password"
-          name="password"
-        />
-        <label for="password">Password</label>
-      </div>
-      <div class="mb-3"></div>
-      <button
-        class="w-100 btn btn-lg btn-primary"
-        type="submit"
-        :disabled="disabled"
-      >
-        <span v-if="!disabled">Sign in</span>
-        <div v-else class="d-flex align-items-center justify-content-center">
-          <strong v-if="isOk">Entering...</strong>
-          <strong v-else>Loading......</strong>
-          <div
-            class="spinner-border spinner-border-sm ms-2"
-            role="status"
-            aria-hidden="true"
-          ></div>
-        </div>
-      </button>
-      <button type="button" class="btn btn-light text-muted w-100 mt-1">
-        Forgot Password?
-      </button>
-      <button
-        type="button"
-        class="btn btn-light mt-3 text-primary w-100"
-        @click="$router.push('signup')"
-      >
-        New user? Sign up
-      </button>
-      <p class="mt-5 mb-3 text-muted">© 2021</p>
-    </form>
+    </div>
   </main>
 </template>
 
@@ -83,7 +92,6 @@ import Input from "@/components/Form/Input.vue";
   components: { "custom-input": Input },
 })
 export default class Login extends Vue {
-
   form = new Validation([
     { name: "email", rules: ["email", "empty"] },
     { name: "password", rules: [[4, 8], "empty"] },
@@ -120,7 +128,15 @@ export default class Login extends Vue {
     this.form.validateAll();
     if (this.form.isFormValid()) {
       this.isSending = true;
-      let res = await axios.post<string, { data: { isOk: boolean } }>(
+      let res = await axios.post<
+        string,
+        {
+          data: {
+            isOk: boolean;
+            messages: { name: string; message: string }[];
+          };
+        }
+      >(
         "/api/login",
         JSON.stringify({
           email: this.email,
@@ -134,27 +150,22 @@ export default class Login extends Vue {
         }, 2000);
       } else {
         this.isSending = false;
+        this.form.addServerErrors(res.data.messages);
       }
-      this.form.clear()
     }
   }
 }
 </script>
 
-<style lang="scss" >
-html,
-body,
+<style lang="scss" scoped>
 .app {
-  height: 100%;
-}
-.app {
-  text-align: center !important;
   display: flex;
   align-items: center;
   padding-top: 40px;
   padding-bottom: 40px;
   background-color: #f5f5f5;
 }
+
 .form-signin {
   width: 100%;
   max-width: 330px;
