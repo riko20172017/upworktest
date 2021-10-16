@@ -1,7 +1,6 @@
 import { createServer, Model } from "miragejs";
 
 export function makeServer({ environment = "development" } = {}) {
-    let id = 9;
     let server = createServer({
         seeds(server) {
             server.db.loadData({
@@ -30,17 +29,23 @@ export function makeServer({ environment = "development" } = {}) {
             this.post("/login", (schema, request) => {
                 let { email, password } = JSON.parse(request.requestBody)
                 let user = schema.db.users.filter((item) => item.email == email && item.password == password)
-                return user.length > 0 ? { isOk: true } : {
-                    isOk: false, messages: [
-                        { name: "email", message: "Login or password is incorrect" },
-                        { name: "password", message: "Login or password is incorrect" }
-                    ]
-                }
+                return user.length > 0
+                    ? { isOk: true }
+                    : {
+                        isOk: false, messages: [
+                            { name: "email", message: "Login or password is incorrect" },
+                            { name: "password", message: "Login or password is incorrect" }
+                        ]
+                    }
             })
             this.post("/signup", (schema, request) => {
                 let { email, password, lastName, firstName } = JSON.parse(request.requestBody)
-                schema.db.users.insert({ email, password, firstName, lastName })
-                return { isOk: true }
+                let user = schema.db.users.insert({ email, password, firstName, lastName })
+                return user.id > 0
+                    ? { isOk: true }
+                    : {
+                        isOk: false, messages: []
+                    }
             })
             this.get("/posts", (schema, request) => {
                 return { posts: schema.db.posts }
@@ -49,6 +54,15 @@ export function makeServer({ environment = "development" } = {}) {
                 let { id } = JSON.parse(request.requestBody)
                 schema.db.posts.remove({ id })
                 return { id }
+            })
+            this.put("/post", (schema, request) => {
+                let { title, content } = JSON.parse(request.requestBody)
+                let post = schema.db.posts.insert({ title, content })
+                return post.id
+                    ? { isOk: true, post }
+                    : {
+                        isOk: false, messages: []
+                    }
             })
         },
     });

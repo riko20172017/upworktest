@@ -63,23 +63,39 @@
           <tr>
             <th scope="row"></th>
             <td>
-              <input
-                class="form-control form-control-md"
+              <custom-input
+                :isValid="form.isValid('title')"
+                :message="form.getMessage('title')"
+                :wasValidate="form.wasValidate('title')"
+                :value="form.getFieldValue('title')"
+                @custom-change="handleChange"
+                @custom-input="handleInput"
+                :disabled="disabled"
+                placeholder="title"
+                id="title"
+                name="title"
                 type="text"
-                v-model="post.title"
               />
             </td>
             <td>
-              <input
-                class="form-control form-control-md"
+              <custom-input
+                :isValid="form.isValid('content')"
+                :message="form.getMessage('content')"
+                :wasValidate="form.wasValidate('content')"
+                :value="form.getFieldValue('content')"
+                @custom-change="handleChange"
+                @custom-input="handleInput"
+                :disabled="disabled"
+                placeholder="content"
+                id="content"
+                name="content"
                 type="text"
-                v-model="post.content"
               />
             </td>
             <td style="width: 16.66%">
               <button
                 type="button"
-                class="btn btn-danger"
+                class="btn btn-primary"
                 @click="addPost()"
                 v-bind:disabled="adding"
               >
@@ -105,6 +121,8 @@
 import { Options, Vue } from "vue-class-component";
 import Header from "@/components/Header.vue";
 import axios from "axios";
+import { Validation } from "@/utils/vaildation";
+import Input from "@/components/Form/Input.vue";
 
 interface IDataRequest<T> {
   post: T;
@@ -119,15 +137,40 @@ interface IPost {
 @Options({
   components: {
     Header,
+    "custom-input": Input,
   },
 })
 export default class Dashboard extends Vue {
   posts: Array<IPost> = [];
-  post: IPost = { id: 0, title: "", content: "" };
   deleting = 0;
   deleted = 0;
-  adding = 0;
+  adding = false;
   fetching = false;
+
+  form = new Validation([
+    { name: "title", rules: ["empty"] },
+    { name: "content", rules: ["empty"] },
+  ]);
+
+  isSending: boolean = false;
+
+  get disabled() {
+    return this.isSending;
+  }
+
+  /**
+   * handleChange
+   */
+  handleChange(name: "password" | "email") {
+    this.form.validate(name);
+  }
+
+  /**
+   * handleInnput
+   */
+  public handleInput(target: { name: "title" | "content"; value: string }) {
+    this.form.changeValue(target.name, target.value);
+  }
 
   async deletePost(id: number, index: number) {
     this.deleting = id;
@@ -153,17 +196,23 @@ export default class Dashboard extends Vue {
   }
 
   async addPost() {
-    try {
-      let res = await axios.put<IDataRequest<IPost>>("/api/post", {
-        post: this.post,
-      });
-      if (res.data.post) {
-        setTimeout(() => this.posts.push(res.data.post), 200);
+    this.form.validateAll();
+    if (this.form.isFormValid()) {
+      this.adding = true;
+      try {
+        let res = await axios.put<
+          string,
+          { data: { isOk: boolean; post: IPost } }
+        >("/api/post", JSON.stringify(this.form.getValues()));
+        if (res.data.isOk) {
+          this.posts.push(res.data.post);
+          this.form.clear();
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
+      this.adding = false;
     }
-    this.deleting = 0;
   }
 
   mounted() {
@@ -186,7 +235,7 @@ export default class Dashboard extends Vue {
 .deleting-post {
   background-color: rgba(255, 0, 0, 0.219);
 }
-.btn.btn-danger {
+.btn.btn-danger, .btn.btn-primary {
   width: 110px;
   .spinner-d {
     position: absolute;
