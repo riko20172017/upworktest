@@ -12,11 +12,12 @@
       <div class="form-floating">
         <!-- email input --------------------------------------------------------------->
         <custom-input
-          :isValid="v.isValid('email')"
-          :messages="v.getMessages('email')"
-          :wasValidate="v.wasValidate('email')"
+          :isValid="form.isValid('email')"
+          :message="form.getMessage('email')"
+          :wasValidate="form.wasValidate('email')"
           :value="email"
-          v-on:custom-change="handleChange"
+          @custom-change="handleChange"
+          @custom-input="handleInput"
           :disabled="disabled"
           placeholder="email"
           id="email"
@@ -27,11 +28,12 @@
       <div class="form-floating">
         <!-- password input ------------------------------------------------------------->
         <custom-input
-          :isValid="v.isValid('password')"
-          :messages="v.getMessages('password')"
-          :wasValidate="v.wasValidate('password')"
+          :isValid="form.isValid('password')"
+          :message="form.getMessage('password')"
+          :wasValidate="form.wasValidate('password')"
           :value="password"
-          v-on:custom-change="handleChange"
+          @custom-change="handleChange"
+          @custom-input="handleInput"
           :disabled="disabled"
           placeholder="password"
           id="password"
@@ -56,7 +58,7 @@
           ></div>
         </div>
       </button>
-      <button type="button" class="btn btn-light text-muted w-100">
+      <button type="button" class="btn btn-light text-muted w-100 mt-1">
         Forgot Password?
       </button>
       <button
@@ -81,43 +83,58 @@ import Input from "@/components/Form/Input.vue";
   components: { "custom-input": Input },
 })
 export default class Login extends Vue {
-  email = "";
-  password = "";
-  v = new Validation();
+
+  form = new Validation([
+    { name: "email", rules: ["email", "empty"] },
+    { name: "password", rules: [[4, 8], "empty"] },
+  ]);
+
   isSending: boolean = false;
 
   get disabled() {
     return this.isSending;
   }
+
+  get email() {
+    return this.form.getFieldValue("email");
+  }
+
+  get password() {
+    return this.form.getFieldValue("password");
+  }
   /**
    * handleChange
    */
-  handleChange(target: { name: "password" | "email"; value: string }) {
-    this[target.name] = target.value;
-    this.v.validate(target.name, target.value);
+  handleChange(name: "password" | "email") {
+    this.form.validate(name);
   }
 
-  mounted() {
-    this.v.add("email", ["empty", "email"]);
-    this.v.add("password", ["empty", [4, 8]]);
+  /**
+   * handleInnput
+   */
+  public handleInput(target: { name: "password" | "email"; value: string }) {
+    this.form.changeValue(target.name, target.value);
   }
 
   async onSubmit() {
-    this.isSending = true;
-    let res = await axios.post<string, { data: { isOk: boolean } }>(
-      "/api/login",
-      JSON.stringify({
-        email: this.email,
-        password: this.password,
-      })
-    );
+    this.form.validateAll();
+    if (this.form.isFormValid()) {
+      this.isSending = true;
+      let res = await axios.post<string, { data: { isOk: boolean } }>(
+        "/api/login",
+        JSON.stringify({
+          email: this.email,
+          password: this.password,
+        })
+      );
 
-    if (res.data.isOk) {
-      setTimeout(() => {
-        this.$router.push("dashboard");
-      }, 2000);
-    } else {
-      this.isSending = false;
+      if (res.data.isOk) {
+        setTimeout(() => {
+          this.$router.push("dashboard");
+        }, 2000);
+      } else {
+        this.isSending = false;
+      }
     }
   }
 }

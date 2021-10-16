@@ -8,20 +8,17 @@
     id="floatingInput"
     placeholder="name@example.com"
     :value="value"
-    v-on:change="
-      $emit('custom-change', {
+    v-on:change="$emit('custom-change', $event.target.name)"
+    v-on:input="
+      $emit('custom-input', {
         value: $event.target.value,
         name: $event.target.name,
       })
     "
-    name="name"
+    :name="name"
   />
 
-  <div
-    class="invalid-feedback mt-0 mb-2"
-    v-for="(message, key) in messages"
-    :key="key"
-  >
+  <div class="invalid-feedback mt-0">
     {{ message }}
   </div>
 </template>
@@ -36,7 +33,7 @@ class Props {
   wasValidate: boolean = prop({
     required: true,
   });
-  messages: string[] = prop({
+  message: string = prop({
     required: true,
   });
   value: string = prop({
@@ -56,6 +53,6 @@ class Props {
   });
 }
 
-@Options({ emits: ["custom-change"] })
+@Options({ emits: ["custom-change", "custom-input"] })
 export default class Input extends Vue.with(Props) {}
 </script>

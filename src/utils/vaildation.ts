@@ -1,40 +1,115 @@
 type Rule = Array<'email' | 'empty' | [number, number]>
 
-export interface IFieldV {
-    name: string
-    rules: Rule;
-    messages: string[],
-    wasValidate: boolean,
-    value: string,
+class Field {
+    name: string = ""
+    rules: Rule = [];
+    message: string = "";
+    wasValidate: boolean = false;
+    value: string = ""
+
+    constructor(name: string, rules: Rule) {
+        this.name = name
+        this.rules = rules
+    }
+
+    /**
+     * checkRules
+     */
+    public checkRules() {
+        this.message = "";
+        this.rules.forEach((rule => {
+            if (rule instanceof Array) {
+                const [min, max] = rule;
+                if (!this.isInRang(min, max))
+                    this.message = `Min is ${min} and max is ${max}`
+            }
+            if (rule === "email") {
+                if (!this.isEmail())
+                    this.message = `Input correct email`
+
+            }
+            if (rule === "empty") {
+                if (this.isEmpty())
+                    this.message = `Field shoudnt be empty`
+            }
+        }))
+    }
+
+    /**
+ * validateRange
+ */
+    public isInRang(min: number, max: number) {
+        if (this.value.length >= min && this.value.length <= max) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * validateEmail
+     */
+
+    public isEmail(): boolean {
+        var re =
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(this.value);
+    }
+
+
+    /**
+     * validateEmpty
+     */
+    public isEmpty() {
+        if (this.value === "") {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * hasMasseges
+     */
+    public hasErrors() {
+        this.message.length !== 0
+    }
+
+    /**
+     * doDirty
+     */
+    public doDirty() {
+        this.wasValidate = true;
+    }
+
+    /**
+     * getValue
+     */
+    public getValue() {
+        return this.value
+    }
 }
 
 export class Validation {
-    fields: Array<IFieldV> = []
+    fields: Array<Field> = []
 
-    add(name: string, rules: Rule): void {
-        const state = {
-            messages: [],
-            wasValidate: false,
-            value: "",
-        }
-        this.fields.push(Object.assign({}, { name, rules }, state));
+    constructor(arg: { name: string, rules: Rule }[]) {
+        arg.forEach((el => this.fields.push(new Field(el.name, el.rules))))
     }
 
-    getMessages(fieldName: string) {
+    getMessage(fieldName: string) {
         for (let i = 0; i < this.fields.length; i++) {
             const field = this.fields[i];
             if (field.name === fieldName) {
-                return field.messages
+                return field.message
             }
         }
-        return []
+        return ""
     }
 
     isValid(fieldName: string) {
         for (let i = 0; i < this.fields.length; i++) {
             const field = this.fields[i];
             if (field.name === fieldName) {
-                return field.messages.length == 0
+                return field.message.length == 0
             }
         }
     }
@@ -51,45 +126,49 @@ export class Validation {
         }
     }
 
-    validate(name: string, value: string) {
-
+    /**
+     * changeValue
+     */
+    public changeValue(name: string, value: string): boolean {
         for (let i = 0; i < this.fields.length; i++) {
             const field = this.fields[i];
             if (field.name == name) {
-                field.wasValidate = true;
-                for (let j = 0; j < field.rules.length; j++) {
-                    const rule = field.rules[j];
-                    if (rule instanceof Array) {
-                        const [min, max] = rule;
-                        if (value.length < min || value.length > max) {
-                            field.messages.length = 0;
-                            field.messages.push(`Min is ${min} and max is ${max}`)
-                            return false
-                        }
-                    }
-                    if (rule === "email") {
-                        if (!this.validEmail(value)) {
-                            field.messages = [];
-                            field.messages.push(`Input correct email`)
-                            return false
-                        }
-                    }
-                    if (rule === "empty") {
-                        if (value === "") {
-                            field.messages.length = 0;
-                            field.messages.push(`Field shoudnt be empty`)
-                            return false
-                        }
-                    }
-                }
+                field.value = value
+                return true
             }
         }
-        return true
+        return false
     }
 
-    validEmail(email: string): boolean {
-        var re =
-            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(email);
+    /**
+     * getFieldValue
+     */
+    public getFieldValue(name: string): string | undefined {
+        return this.fields.find(field => field.name == name)?.getValue()
     }
+
+    validateAll() {
+        this.fields.forEach(field => {
+            field.checkRules()
+            field.doDirty();
+        })
+    }
+
+    validate(name: string): void {
+        const field = this.fields.find(field => field.name == name)
+        if (field) {
+            field.checkRules();
+        }
+    }
+
+    /**
+     * isValid
+     */
+    public isFormValid() {
+        return this.fields.every(field => field.hasErrors())
+    }
+
+
+
+
 }
