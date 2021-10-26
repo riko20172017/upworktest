@@ -48,7 +48,7 @@ export function makeServer({ environment = "development" } = {}) {
                     }
             })
             this.get("/posts", (schema, request) => {
-                return { posts: schema.db.posts }
+                return schema.db.posts
             })
             this.delete("/post", (schema, request) => {
                 let { id } = JSON.parse(request.requestBody)
