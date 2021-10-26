@@ -1,3 +1,5 @@
+import { ref, onMounted, watch, computed } from 'vue'
+
 type Rule = Array<'email' | 'empty' | [number, number]>
 
 class Field {
@@ -81,16 +83,17 @@ class Field {
     }
 }
 
-export class Validation {
-    fields: Array<Field> = []
+export default function useFormValidation(arg: { name: string, rules: Rule }[]) {
+    const fields = ref<Field[]>([])
 
-    constructor(arg: { name: string, rules: Rule }[]) {
-        arg.forEach((el => this.fields.push(new Field(el.name, el.rules))))
-    }
+    console.log(fields.value);
 
-    getMessage(fieldName: string) {
-        for (let i = 0; i < this.fields.length; i++) {
-            const field = this.fields[i];
+
+    arg.forEach((el => fields.value.push(new Field(el.name, el.rules))))
+
+    function getMessage(fieldName: string) {
+        for (let i = 0; i < fields.value.length; i++) {
+            const field = fields.value[i];
             if (field.name === fieldName) {
                 return field.message
             }
@@ -98,9 +101,9 @@ export class Validation {
         return ""
     }
 
-    isValid(fieldName: string) {
-        for (let i = 0; i < this.fields.length; i++) {
-            const field = this.fields[i];
+    function isValid(fieldName: string) {
+        for (let i = 0; i < fields.value.length; i++) {
+            const field = fields.value[i];
             if (field.name === fieldName) {
                 return field.message.length == 0
             }
@@ -110,9 +113,9 @@ export class Validation {
     /**
      * wasValid
      */
-    public wasValidate(fieldName: string) {
-        for (let i = 0; i < this.fields.length; i++) {
-            const field = this.fields[i];
+    function wasValidate(fieldName: string) {
+        for (let i = 0; i < fields.value.length; i++) {
+            const field = fields.value[i];
             if (field.name === fieldName) {
                 return field.wasValidate
             }
@@ -122,9 +125,9 @@ export class Validation {
     /**
      * changeValue
      */
-    public changeValue(name: string, value: string): boolean {
-        for (let i = 0; i < this.fields.length; i++) {
-            const field = this.fields[i];
+    function changeValue(name: string, value: string): boolean {
+        for (let i = 0; i < fields.value.length; i++) {
+            const field = fields.value[i];
             if (field.name == name) {
                 field.value = value
                 return true
@@ -136,19 +139,19 @@ export class Validation {
     /**
      * getFieldValue
      */
-    public getFieldValue(name: string): string | undefined {
-        return this.fields.find(field => field.name == name)?.getValue()
+    function getFieldValue(name: string): string {
+        return <string>fields.value.find(field => field.name == name)?.getValue()
     }
 
-    validateAll() {
-        this.fields.forEach(field => {
+    function validateAll() {
+        fields.value.forEach(field => {
             field.checkRules()
             field.doDirty();
         })
     }
 
-    validate(name: string): void {
-        const field = this.fields.find(field => field.name == name)
+    function validate(name: string): void {
+        const field = fields.value.find(field => field.name == name)
         if (field) {
             field.checkRules();
         }
@@ -157,15 +160,15 @@ export class Validation {
     /**
      * isValid
      */
-    public isFormValid() {
-        return this.fields.every(field => field.message == "")
+    function isFormValid() {
+        return fields.value.every(field => field.message == "")
     }
 
     /**
      * clear
      */
-    public clear() {
-        this.fields.map((field) => {
+    function clear() {
+        fields.value.map((field) => {
             field.value = "";
             field.wasValidate = false
             return field
@@ -175,11 +178,11 @@ export class Validation {
     /**
      * getValues
      */
-    public getValues() {
+    function getValues() {
         let values: {
             [key: string]: string
         } = {}
-        this.fields.map(field => {
+        fields.value.map(field => {
             values[field.name] = field.value
         })
         return values
@@ -188,9 +191,9 @@ export class Validation {
     /**
      * addServerErrors
      */
-    public addServerErrors(messages: { name: string, message: string }[]) {
+    function addServerErrors(messages: { name: string, message: string }[]) {
         messages.forEach(({ name, message }) => {
-            this.fields.map(field => {
+            fields.value.map(field => {
                 if (field.name == name) {
                     field.message = message
                 }
@@ -198,7 +201,29 @@ export class Validation {
         })
     }
 
+    function handleChange(name: string) {
+        validate(name);
+    }
 
+    function handleInput(target: {
+        name: string;
+        value: string;
+    }) {
+        changeValue(target.name, target.value);
+    }
 
-
+    return {
+        addServerErrors,
+        getValues,
+        isFormValid,
+        validate,
+        validateAll,
+        getFieldValue,
+        changeValue,
+        wasValidate,
+        isValid,
+        getMessage,
+        handleChange,
+        handleInput
+    }
 }

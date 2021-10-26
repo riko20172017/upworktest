@@ -41,7 +41,10 @@
                 <a
                   :href="href"
                   @click="navigate"
-                  :class="['nav-link px-2 text-white', isActive && 'text-white-50']"
+                  :class="[
+                    'nav-link px-2 text-white',
+                    isActive && 'text-white-50',
+                  ]"
                   >Home</a
                 >
               </li>
@@ -56,8 +59,11 @@
                 <a
                   :href="href"
                   @click="navigate"
-                  :class="['nav-link px-2 text-white', isActive && 'text-white-50']"
-                  >About</a
+                  :class="[
+                    'nav-link px-2 text-white',
+                    isActive && 'text-white-50',
+                  ]"
+                  >About {{ isAuthenticated }}</a
                 >
               </li>
             </router-link>
@@ -78,17 +84,24 @@
 </template>
 
 <script lang="ts">
-import { Options, Vue } from "vue-class-component";
+import { computed, defineComponent } from "vue";
+import { mapState } from "vuex";
+import { useStore } from "@/store";
 
-@Options({
-  props: {},
-})
-export default class Header extends Vue {}
+export default defineComponent({
+  name: "Header",
+  setup() {
+    const store = useStore();
+    return {
+      isAuthenticated: computed(() => store.getters.isAuthenticated),
+    };
+  }
+});
 </script>
 
 <style scoped lang="sass">
 .logo
-    width: 25px
+  width: 25px
 .active
-    color: grey
+  color: grey
 </style>

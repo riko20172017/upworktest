@@ -10,17 +10,19 @@
             width="72"
             height="57"
           />
-          <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+          <h1 class="h3 mb-3 fw-normal">
+            Please sign in{{ getFieldValue("email") }}
+          </h1>
           <div class="form-floating">
             <!-- email input --------------------------------------------------------------->
             <custom-input
-              :isValid="form.isValid('email')"
-              :message="form.getMessage('email')"
-              :wasValidate="form.wasValidate('email')"
-              :value="email"
+              :isValid="isValid('email')"
+              :message="getMessage('email')"
+              :wasValidate="wasValidate('email')"
+              :value="getFieldValue('email')"
               @custom-change="handleChange"
               @custom-input="handleInput"
-              :disabled="disabled"
+              :disabled="isSending"
               placeholder="name@example.com"
               id="email"
               name="email"
@@ -31,13 +33,13 @@
           <div class="form-floating">
             <!-- password input ------------------------------------------------------------->
             <custom-input
-              :isValid="form.isValid('password')"
-              :message="form.getMessage('password')"
-              :wasValidate="form.wasValidate('password')"
-              :value="password"
+              :isValid="isValid('password')"
+              :message="getMessage('password')"
+              :wasValidate="wasValidate('password')"
+              :value="getFieldValue('password')"
               @custom-change="handleChange"
               @custom-input="handleInput"
-              :disabled="disabled"
+              :disabled="isSending"
               placeholder="password"
               id="password"
               name="password"
@@ -49,9 +51,9 @@
           <button
             class="w-100 btn btn-lg btn-primary"
             type="submit"
-            :disabled="disabled"
+            :disabled="isSending"
           >
-            <span v-if="!disabled">Sign in</span>
+            <span v-if="!isSending">Sign in</span>
             <div
               v-else
               class="d-flex align-items-center justify-content-center"
@@ -83,80 +85,125 @@
 </template>
 
 <script lang="ts">
-import { Options, Vue } from "vue-class-component";
-import axios from "axios";
-import { Validation } from "@/utils/vaildation";
 import Input from "@/components/Form/Input.vue";
+import { useStore } from "@/store";
+import { computed, defineComponent, ref } from "vue";
+import { ActionTypes } from "@/store/actions";
+import useFromValidation from "@/composables/useFromValidation";
+import { useRouter } from "vue-router";
 
-@Options({
+export default defineComponent({
   components: { "custom-input": Input },
-})
-export default class Login extends Vue {
-  form = new Validation([
-    { name: "email", rules: ["email", "empty"] },
-    { name: "password", rules: [[4, 8], "empty"] },
-  ]);
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+    const isAuthenticated = computed(() => store.getters.isAuthenticated);
 
-  isSending: boolean = false;
-  redirection = false;
+    const {
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      validateAll,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+      handleChange,
+      handleInput,
+    } = useFromValidation([
+      { name: "email", rules: ["email", "empty"] },
+      { name: "password", rules: [[4, 8], "empty"] },
+    ]);
 
-  get disabled() {
-    return this.isSending;
-  }
+    let isSending = ref(false);
+    let redirection = ref(false);
 
-  get email() {
-    return this.form.getFieldValue("email");
-  }
-
-  get password() {
-    return this.form.getFieldValue("password");
-  }
-  /**
-   * handleChange
-   */
-  handleChange(name: "password" | "email") {
-    this.form.validate(name);
-  }
-
-  /**
-   * handleInnput
-   */
-  public handleInput(target: { name: "password" | "email"; value: string }) {
-    this.form.changeValue(target.name, target.value);
-  }
-
-  async onSubmit() {
-    this.form.validateAll();
-    if (this.form.isFormValid()) {
-      this.isSending = true;
-      let res = await axios.post<
-        string,
-        {
-          data: {
-            isOk: boolean;
-            messages: { name: string; message: string }[];
-          };
+    async function onSubmit() {
+      validateAll();
+      if (isFormValid()) {
+        isSending.value = true;
+        try {
+          await store.dispatch(ActionTypes.LogIn, {
+            email: getFieldValue("email"),
+            password: getFieldValue("password"),
+          });
+          redirection.value = true;
+          router.push("dashboard");
+        } catch (errors: any) {
+          addServerErrors(errors);
+          isSending.value = false;
         }
-      >(
-        "/api/login",
-        JSON.stringify({
-          email: this.email,
-          password: this.password,
-        })
-      );
-
-      if (res.data.isOk) {
-        this.redirection = true;
-        setTimeout(() => {
-          this.$router.push("dashboard");
-        }, 2000);
-      } else {
-        this.isSending = false;
-        this.form.addServerErrors(res.data.messages);
       }
     }
-  }
-}
+    return {
+      isAuthenticated,
+      isSending,
+      redirection,
+      handleChange,
+      handleInput,
+      onSubmit,
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      validateAll,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+    };
+  },
+});
+
+// export default class Login extends Vue {
+
+//   async onSubmit() {
+//     this.form.validateAll();
+//     if (this.form.isFormValid()) {
+//       this.isSending = true;
+//       try {
+//         await this.store.dispatch("auth/LogIn", {
+//           email: this.email,
+//           password: this.password,
+//         });
+//         this.redirection = true;
+//         this.$router.push("dashboard");
+//       } catch (errors: any) {
+//         this.form.addServerErrors(errors);
+//         this.isSending = false;
+//       }
+
+//       // let res = await axios.post<
+//       //   string,
+//       //   {
+//       //     data: {
+//       //       isOk: boolean;
+//       //       messages: { name: string; message: string }[];
+//       //     };
+//       //   }
+//       // >(
+//       //   "/api/login",
+//       //   JSON.stringify({
+//       //     email: this.email,
+//       //     password: this.password,
+//       //   })
+//       // );
+
+//       // if (res.data.isOk) {
+//       //   this.redirection = true;
+//       //   setTimeout(() => {
+//       //     this.$router.push("dashboard");
+//       //   }, 2000);
+//       // } else {
+//       //   this.isSending = false;
+//       //   this.form.addServerErrors(res.data.messages);
+//       // }
+//     }
+//   }
+// }
 </script>
 
 <style lang="scss" scoped>
