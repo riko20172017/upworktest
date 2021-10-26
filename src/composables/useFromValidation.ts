@@ -220,6 +220,7 @@ export default function useFormValidation(arg: { name: string, rules: Rule }[]) 
         isValid,
         getMessage,
         handleChange,
-        handleInput
+        handleInput,
+        clear
     }
 }
