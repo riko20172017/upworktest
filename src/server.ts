@@ -1,4 +1,4 @@
-import { createServer, Model } from "miragejs";
+import { createServer, Model, Response } from "miragejs";
 
 export function makeServer({ environment = "development" } = {}) {
     let server = createServer({
@@ -30,13 +30,13 @@ export function makeServer({ environment = "development" } = {}) {
                 let { email, password } = JSON.parse(request.requestBody)
                 let user = schema.db.users.filter((item) => item.email == email && item.password == password)
                 return user.length > 0
-                    ? { isOk: true }
-                    : {
-                        isOk: false, messages: [
+                    ? new Response(200, {}, { ...user.pop() })
+                    : new Response(422, {}, {
+                        errors: [
                             { name: "email", message: "Login or password is incorrect" },
                             { name: "password", message: "Login or password is incorrect" }
                         ]
-                    }
+                    })
             })
             this.post("/signup", (schema, request) => {
                 let { email, password, lastName, firstName } = JSON.parse(request.requestBody)
