@@ -16,13 +16,13 @@
               <div class="col-sm-6">
                 <div class="form-floating">
                   <custom-input
-                    :isValid="form.isValid('firstName')"
-                    :message="form.getMessage('firstName')"
-                    :wasValidate="form.wasValidate('firstName')"
-                    :value="form.getFieldValue('firstName')"
+                    :isValid="isValid('firstName')"
+                    :message="getMessage('firstName')"
+                    :wasValidate="wasValidate('firstName')"
+                    :value="getFieldValue('firstName')"
                     @custom-change="handleChange"
                     @custom-input="handleInput"
-                    :disabled="disabled"
+                    :disabled="isSending"
                     placeholder="First name"
                     id="firstName"
                     name="firstName"
@@ -34,13 +34,13 @@
               <div class="col-sm-6">
                 <div class="form-floating">
                   <custom-input
-                    :isValid="form.isValid('lastName')"
-                    :message="form.getMessage('lastName')"
-                    :wasValidate="form.wasValidate('lastName')"
-                    :value="form.getFieldValue('lastName')"
+                    :isValid="isValid('lastName')"
+                    :message="getMessage('lastName')"
+                    :wasValidate="wasValidate('lastName')"
+                    :value="getFieldValue('lastName')"
                     @custom-change="handleChange"
                     @custom-input="handleInput"
-                    :disabled="disabled"
+                    :disabled="isSending"
                     placeholder="Last name"
                     id="lastName"
                     name="lastName"
@@ -52,13 +52,13 @@
               <div class="col-12">
                 <div class="form-floating">
                   <custom-input
-                    :isValid="form.isValid('email')"
-                    :message="form.getMessage('email')"
-                    :wasValidate="form.wasValidate('email')"
-                    :value="form.getFieldValue('email')"
+                    :isValid="isValid('email')"
+                    :message="getMessage('email')"
+                    :wasValidate="wasValidate('email')"
+                    :value="getFieldValue('email')"
                     @custom-change="handleChange"
                     @custom-input="handleInput"
-                    :disabled="disabled"
+                    :disabled="isSending"
                     placeholder="name@example.com"
                     id="email"
                     name="email"
@@ -70,13 +70,13 @@
               <div class="col-12">
                 <div class="form-floating">
                   <custom-input
-                    :isValid="form.isValid('password')"
-                    :message="form.getMessage('password')"
-                    :wasValidate="form.wasValidate('password')"
-                    :value="form.getFieldValue('password')"
+                    :isValid="isValid('password')"
+                    :message="getMessage('password')"
+                    :wasValidate="wasValidate('password')"
+                    :value="getFieldValue('password')"
                     @custom-change="handleChange"
                     @custom-input="handleInput"
-                    :disabled="disabled"
+                    :disabled="isSending"
                     placeholder="Password"
                     id="password"
                     name="password"
@@ -90,9 +90,9 @@
             <button
               class="w-100 btn btn-lg btn-primary"
               type="submit"
-              :disabled="disabled"
+              :disabled="isSending"
             >
-              <span v-if="!disabled">Create</span>
+              <span v-if="!isSending">Create</span>
               <div
                 v-else
                 class="d-flex align-items-center justify-content-center"
@@ -114,64 +114,76 @@
 </template>
 
 <script lang="ts">
-import { Options, Vue } from "vue-class-component";
-import axios from "axios";
-import { Validation } from "@/utils/vaildation";
 import Input from "@/components/Form/Input.vue";
+import { useStore } from "@/store";
+import { computed, defineComponent, ref } from "vue";
+import { ActionTypes } from "@/store/actions";
+import useFromValidation from "@/composables/useFromValidation";
+import { useRouter } from "vue-router";
 
-@Options({
+export default defineComponent({
+  name: "SignUp",
   components: { "custom-input": Input },
-})
-export default class Login extends Vue {
-  form = new Validation([
-    { name: "email", rules: ["email", "empty"] },
-    { name: "password", rules: [[4, 8], "empty"] },
-    { name: "firstName", rules: [[2, 8], "empty"] },
-    { name: "lastName", rules: [[2, 8], "empty"] },
-  ]);
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+    const isAuthenticated = computed(() => store.getters.isAuthenticated);
 
-  isSending = false;
-  redirection = false;
+    const {
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+      handleChange,
+      handleInput,
+      clear,
+    } = useFromValidation([
+      { name: "email", rules: ["email", "empty"] },
+      { name: "password", rules: [[4, 8], "empty"] },
+      { name: "firstName", rules: [[2, 8], "empty"] },
+      { name: "lastName", rules: [[2, 8], "empty"] },
+    ]);
 
-  get disabled() {
-    return this.isSending;
-  }
+    const isSending = ref(false);
+    const redirection = ref(false);
 
-  /**
-   * handleChange
-   */
-  public handleChange(name: "password" | "email") {
-    this.form.validate(name);
-  }
-
-  /**
-   * handleInnput
-   */
-  public handleInput(target: { name: "password" | "email"; value: string }) {
-    this.form.changeValue(target.name, target.value);
-  }
-
-  async onSubmit() {
-    this.form.validateAll();
-    if (this.form.isFormValid()) {
-      this.isSending = true;
-      let res = await axios.post<string, { data: { isOk: boolean } }>(
-        "/api/signup",
-        JSON.stringify(this.form.getValues())
-      );
-
-      if (res.data.isOk) {
-        this.redirection = true;
-        setTimeout(() => {
-          this.$router.push("dashboard");
-        }, 2000);
-      } else {
-        this.isSending = false;
+    async function onSubmit() {
+      if (isFormValid()) {
+        isSending.value = true;
+        try {
+          await store.dispatch(ActionTypes.Register, getValues());
+          redirection.value = true;
+          router.push("dashboard");
+        } catch (errors: any) {
+          addServerErrors(errors);
+          isSending.value = false;
+        }
       }
-      this.form.clear();
     }
-  }
-}
+    return {
+      isAuthenticated,
+      isSending,
+      redirection,
+      handleChange,
+      handleInput,
+      onSubmit,
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

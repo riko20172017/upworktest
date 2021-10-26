@@ -93,6 +93,7 @@ import useFromValidation from "@/composables/useFromValidation";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
+  name: "Login",
   components: { "custom-input": Input },
   setup() {
     const store = useStore();
@@ -154,53 +155,6 @@ export default defineComponent({
     };
   },
 });
-
-// export default class Login extends Vue {
-
-//   async onSubmit() {
-//     this.form.validateAll();
-//     if (this.form.isFormValid()) {
-//       this.isSending = true;
-//       try {
-//         await this.store.dispatch("auth/LogIn", {
-//           email: this.email,
-//           password: this.password,
-//         });
-//         this.redirection = true;
-//         this.$router.push("dashboard");
-//       } catch (errors: any) {
-//         this.form.addServerErrors(errors);
-//         this.isSending = false;
-//       }
-
-//       // let res = await axios.post<
-//       //   string,
-//       //   {
-//       //     data: {
-//       //       isOk: boolean;
-//       //       messages: { name: string; message: string }[];
-//       //     };
-//       //   }
-//       // >(
-//       //   "/api/login",
-//       //   JSON.stringify({
-//       //     email: this.email,
-//       //     password: this.password,
-//       //   })
-//       // );
-
-//       // if (res.data.isOk) {
-//       //   this.redirection = true;
-//       //   setTimeout(() => {
-//       //     this.$router.push("dashboard");
-//       //   }, 2000);
-//       // } else {
-//       //   this.isSending = false;
-//       //   this.form.addServerErrors(res.data.messages);
-//       // }
-//     }
-//   }
-// }
 </script>
 
 <style lang="scss" scoped>

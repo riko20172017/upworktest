@@ -45,7 +45,7 @@
               <button
                 type="button"
                 class="btn btn-danger"
-                @click="deletePost(id, key)"
+                @click="deletePost(id)"
                 v-bind:disabled="deleting == id"
               >
                 <div v-show="deleting == id" class="spinner-d pr-1">
@@ -64,13 +64,13 @@
             <th scope="row"></th>
             <td>
               <custom-input
-                :isValid="form.isValid('title')"
-                :message="form.getMessage('title')"
-                :wasValidate="form.wasValidate('title')"
-                :value="form.getFieldValue('title')"
+                :isValid="isValid('title')"
+                :message="getMessage('title')"
+                :wasValidate="wasValidate('title')"
+                :value="getFieldValue('title')"
                 @custom-change="handleChange"
                 @custom-input="handleInput"
-                :disabled="disabled"
+                :disabled="adding"
                 placeholder="title"
                 id="title"
                 name="title"
@@ -79,13 +79,13 @@
             </td>
             <td>
               <custom-input
-                :isValid="form.isValid('content')"
-                :message="form.getMessage('content')"
-                :wasValidate="form.wasValidate('content')"
-                :value="form.getFieldValue('content')"
+                :isValid="isValid('content')"
+                :message="getMessage('content')"
+                :wasValidate="wasValidate('content')"
+                :value="getFieldValue('content')"
                 @custom-change="handleChange"
                 @custom-input="handleInput"
-                :disabled="disabled"
+                :disabled="adding"
                 placeholder="content"
                 id="content"
                 name="content"
@@ -118,107 +118,104 @@
 </template>
 
 <script lang="ts">
-import { Options, Vue } from "vue-class-component";
-import Header from "@/components/Header.vue";
-import axios from "axios";
-import { Validation } from "@/utils/vaildation";
+//
 import Input from "@/components/Form/Input.vue";
+import { useStore } from "@/store";
+import { computed, defineComponent, onMounted, ref } from "vue";
+import { ActionTypes } from "@/store/actions";
+import useFromValidation from "@/composables/useFromValidation";
+import Header from "@/components/Header.vue";
 
-interface IDataRequest<T> {
-  post: T;
-}
+export default defineComponent({
+  name: "Dashboard",
+  components: { "custom-input": Input, Header },
+  setup() {
+    const store = useStore();
 
-interface IPost {
-  id: number;
-  title: string;
-  content: string;
-}
+    const {
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+      handleChange,
+      handleInput,
+      clear,
+    } = useFromValidation([
+      { name: "title", rules: ["empty"] },
+      { name: "content", rules: ["empty"] },
+    ]);
+    const posts = computed(() => store.state.posts);
 
-@Options({
-  components: {
-    Header,
-    "custom-input": Input,
-  },
-})
-export default class Dashboard extends Vue {
-  posts: Array<IPost> = [];
-  deleting = 0;
-  deleted = 0;
-  adding = false;
-  fetching = false;
+    const deleting = ref(0);
+    const deleted = ref(0);
+    const adding = ref(false);
+    const fetching = ref(false);
 
-  form = new Validation([
-    { name: "title", rules: ["empty"] },
-    { name: "content", rules: ["empty"] },
-  ]);
-
-  isSending: boolean = false;
-
-  get disabled() {
-    return this.isSending;
-  }
-
-  /**
-   * handleChange
-   */
-  handleChange(name: "password" | "email") {
-    this.form.validate(name);
-  }
-
-  /**
-   * handleInnput
-   */
-  public handleInput(target: { name: "title" | "content"; value: string }) {
-    this.form.changeValue(target.name, target.value);
-  }
-
-  async deletePost(id: number, index: number) {
-    this.deleting = id;
-    try {
-      let res = await axios.delete("/api/post", { data: { id } });
-      if (res.data.id == id) {
-        this.deleted = id;
-        setTimeout(() => this.posts.splice(index, 1), 200);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-    this.deleting = 0;
-  }
-
-  async getPosts() {
-    this.fetching = true;
-    let res = await axios.get<string, { data: { posts: Array<IPost> } }>(
-      "/api/posts"
-    );
-    this.posts = res.data.posts;
-    this.fetching = false;
-  }
-
-  async addPost() {
-    this.form.validateAll();
-    if (this.form.isFormValid()) {
-      this.adding = true;
-      try {
-        let res = await axios.put<
-          string,
-          { data: { isOk: boolean; post: IPost } }
-        >("/api/post", JSON.stringify(this.form.getValues()));
-        if (res.data.isOk) {
-          this.posts.push(res.data.post);
-          this.form.clear();
+    async function addPost() {
+      if (isFormValid()) {
+        adding.value = true;
+        try {
+          await store.dispatch(ActionTypes.CreatePost, {
+            id: 0,
+            title: getFieldValue("title"),
+            content: getFieldValue("title"),
+          });
+          clear();
+        } catch (errors: any) {
+          addServerErrors(errors);
         }
-      } catch (error) {
-        console.log(error);
+        adding.value = false;
       }
-      this.adding = false;
     }
-  }
 
-  mounted() {
-    this.getPosts();
-  }
-}
+    async function deletePost(id: number) {
+      deleting.value = id;
+      try {
+        await store.dispatch(ActionTypes.DeletePost, id);
+        deleted.value = id;
+      } catch (errors: any) {
+        addServerErrors(errors);
+      }
+      deleting.value = 0;
+    }
+
+    async function getPosts() {
+      fetching.value = true;
+      try {
+        await store.dispatch(ActionTypes.GetPosts);
+      } catch (errors: any) {}
+      fetching.value = false;
+    }
+
+    onMounted(() => getPosts());
+
+    return {
+      posts,
+      fetching,
+      adding,
+      deleted,
+      deleting,
+      handleChange,
+      handleInput,
+      addPost,
+      addServerErrors,
+      getValues,
+      isFormValid,
+      validate,
+      getFieldValue,
+      changeValue,
+      wasValidate,
+      isValid,
+      getMessage,
+      deletePost,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
@@ -235,7 +232,8 @@ export default class Dashboard extends Vue {
 .deleting-post {
   background-color: rgba(255, 0, 0, 0.219);
 }
-.btn.btn-danger, .btn.btn-primary {
+.btn.btn-danger,
+.btn.btn-primary {
   width: 110px;
   .spinner-d {
     position: absolute;
