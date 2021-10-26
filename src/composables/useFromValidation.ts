@@ -143,13 +143,6 @@ export default function useFormValidation(arg: { name: string, rules: Rule }[]) 
         return <string>fields.value.find(field => field.name == name)?.getValue()
     }
 
-    function validateAll() {
-        fields.value.forEach(field => {
-            field.checkRules()
-            field.doDirty();
-        })
-    }
-
     function validate(name: string): void {
         const field = fields.value.find(field => field.name == name)
         if (field) {
@@ -161,6 +154,10 @@ export default function useFormValidation(arg: { name: string, rules: Rule }[]) 
      * isValid
      */
     function isFormValid() {
+        fields.value.forEach(field => {
+            field.checkRules()
+            field.doDirty();
+        })
         return fields.value.every(field => field.message == "")
     }
 
@@ -217,7 +214,6 @@ export default function useFormValidation(arg: { name: string, rules: Rule }[]) 
         getValues,
         isFormValid,
         validate,
-        validateAll,
         getFieldValue,
         changeValue,
         wasValidate,

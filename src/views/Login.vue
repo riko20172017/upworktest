@@ -104,7 +104,6 @@ export default defineComponent({
       getValues,
       isFormValid,
       validate,
-      validateAll,
       getFieldValue,
       changeValue,
       wasValidate,
@@ -121,7 +120,6 @@ export default defineComponent({
     let redirection = ref(false);
 
     async function onSubmit() {
-      validateAll();
       if (isFormValid()) {
         isSending.value = true;
         try {
@@ -148,7 +146,6 @@ export default defineComponent({
       getValues,
       isFormValid,
       validate,
-      validateAll,
       getFieldValue,
       changeValue,
       wasValidate,
