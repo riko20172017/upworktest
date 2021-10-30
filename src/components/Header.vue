@@ -74,10 +74,26 @@
             </button>
           </div>
           <div class="text-end" v-else>
-            <button type="button" class="btn btn-outline-light me-2">
-              Login
-            </button>
-            <button type="button" class="btn btn-warning">Sign-up</button>
+            <router-link to="login" custom v-slot="{ href, navigate }">
+              <a
+                type="button"
+                class="btn btn-outline-light me-2"
+                :href="href"
+                @click="navigate"
+              >
+                Login
+              </a>
+            </router-link>
+            <router-link to="signup" custom v-slot="{ href, navigate }">
+              <a
+                type="button"
+                class="btn btn-warning"
+                :href="href"
+                @click="navigate"
+              >
+                Signup
+              </a>
+            </router-link>
           </div>
         </div>
       </div>
