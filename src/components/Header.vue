@@ -51,7 +51,7 @@
             </router-link>
 
             <router-link
-              to="about"
+              to="dashboard"
               custom
               v-slot="{ href, navigate, isActive }"
             >
@@ -63,15 +63,17 @@
                     'nav-link px-2 text-white',
                     isActive && 'text-white-50',
                   ]"
-                  >About {{ isAuthenticated }}</a
+                  >Dashboard</a
                 >
               </li>
             </router-link>
-            <li><a href="#" class="nav-link px-2 text-white">Pricing</a></li>
-            <li><a href="#" class="nav-link px-2 text-white">FAQs</a></li>
-            <li><a href="#" class="nav-link px-2 text-white">About</a></li>
           </ul>
-          <div class="text-end">
+          <div class="text-end" v-if="isAuthenticated">
+            <button type="button" class="btn btn-warning" @click="logOut">
+              Exit
+            </button>
+          </div>
+          <div class="text-end" v-else>
             <button type="button" class="btn btn-outline-light me-2">
               Login
             </button>
@@ -86,15 +88,22 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore } from "@/store";
+import { ActionTypes } from "@/store/actions";
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "Header",
   setup() {
     const store = useStore();
+    const router = useRouter();
     return {
       isAuthenticated: computed(() => store.getters.isAuthenticated),
+      logOut: () => {
+        store.dispatch(ActionTypes.LogOut);
+        router.push("login");
+      },
     };
-  }
+  },
 });
 </script>
 
