@@ -86,9 +86,6 @@ class Field {
 export default function useFormValidation(arg: { name: string, rules: Rule }[]) {
     const fields = ref<Field[]>([])
 
-    console.log(fields.value);
-
-
     arg.forEach((el => fields.value.push(new Field(el.name, el.rules))))
 
     function getMessage(fieldName: string) {
